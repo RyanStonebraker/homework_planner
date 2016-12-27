@@ -1,82 +1,80 @@
 // homework.h
 // Ryan Stonebraker
-// 11/30/2016
-// header for homework.cpp, includes Homework class
-
-#ifndef FILE_HOMEWORK_H_INCLUDED
-#define FILE_HOMEWORK_H_INCLUDED
+// 12/17/2016
+// header file containing homework class
 
 #include <iostream>
-using std::cerr;
-using std::endl;
 #include <string>
-using std::string;
+#include <map>
 #include <vector>
-using std::vector;
 #include <tuple>
-using std::tuple;
-using std::get;
-using std::make_tuple;
+
+enum {MONTH, DAY, YEAR};
 
 class Homework {
 public:
-  Homework (string name, string clsNm, vector <int> probs);
-  Homework (string name, vector <int> probs);
-  Homework (string name, string clsNm);
-  Homework (string name)
+  Homework (std::string name, std::string clss, std::map<std::string, bool> problems, std::tuple <int, int, int> dueDt)
   {
-    _name = name;
+    _nm = name;
+    _clss = clss;
+    _probs = problems;
+    _dueDt = dueDt;
+    ++nmHW;
   }
   Homework ()
   {
+    ++nmHW;
   }
 private:
-  string _name = "";
-  string _class = "";
-  int _probs = 0;
-  vector <tuple<int, bool> > _pr;
-  bool _keep = true;
-  bool find (int probNum);
+  std::string _nm;
+  std::string _clss;
+  std::map<std::string, bool> _probs;
+  std::tuple<int, int, int> _dueDt;
+  static int nmHW;
 public:
-  string aName ()
+  const std::string name ()
   {
-    return _name;
+    return _nm;
   }
-  string aClass ()
+  const std::string course ()
   {
-    return _class;
+    return _clss;
   }
-  int aProbs ()
+  static int hwAmt ()
+  {
+    return nmHW;
+  }
+  const std::map<std::string, bool> allProbs ()
   {
     return _probs;
   }
-  void setName (string name)
+  void setProbs (const std::map <std::string, bool> & prbs)
   {
-    _name = name;
+    _probs = prbs;
   }
-  void setClass (string cls)
+  const bool probStat (std::string find)
   {
-    _class = cls;
+    return _probs[find];
   }
-  void setProbs (int probsNum)
+  void finProb (const std::string & prb)
   {
-    _probs = probsNum;
+    _probs[prb] = true;
   }
-  bool status ()
+  const std::string dueString ()
   {
-    return _keep;
+    return std::to_string(std::get<MONTH>(_dueDt)) + "/" +
+    std::to_string(std::get<DAY>(_dueDt)) + "/" + std::to_string(std::get<YEAR>(_dueDt));
   }
-  void remove ()
+  const int dMonth ()
   {
-    _keep = false;
+    return std::get<MONTH>(_dueDt);
   }
-  void addProb (int num, bool status);
-  void finProb (int probNum, int place);
-  void sortProbs ();
-  tuple<int, bool> viewProb (int i)
+  const int dDay ()
   {
-    return _pr[i];
+    return std::get<DAY>(_dueDt);
+  }
+  const int dYear ()
+  {
+    return std::get<YEAR>(_dueDt);
   }
 };
-
-#endif
