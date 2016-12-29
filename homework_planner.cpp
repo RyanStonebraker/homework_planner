@@ -24,6 +24,8 @@ using std::vector;
 using std::ifstream;
 using std::ofstream;
 #include "homework.h"
+#include <algorithm>
+using std::equal_range;
 
 void plannerMode (bool & changed)
 {
@@ -96,123 +98,192 @@ void addAssnmt (string nm, vector <Homework> & stored, bool & changed)
   stored.push_back (entry);
 }
 
-void rmAssnmt (string nm)
-{
-
-}
-
-void viewAssnmt (string nm, vector <Homework> & stored)
+void showProb (Homework hw, bool & top)
 {
   string NameWrite = "Name:            ";
   string CourseWrite = "Course:            ";
   string DueWrite = "Due Date:    ";
   string ProblemWrite = "Problems:                              ";
-  cout << NameWrite << " " << CourseWrite << " " << DueWrite << " " << ProblemWrite << endl;
+  if (top)
+  {
+    cout << NameWrite << " " << CourseWrite << " " << DueWrite << " " << ProblemWrite << endl;
+    top = false;
+  }
+
+  string name = hw.name();
+  string course = hw.course();
+  string due = hw.dueString();
+  string problems;
+  bool frst = true;
+  for (auto &prb : hw.allProbs())
+  {
+    if (!frst)
+      problems += ", ";
+    else
+      frst = false;
+    problems += prb.first + "-" + ((prb.second) ? "Unfinished" : "Finished");
+  }
+
+  string current;
+  int maxLen, lstEx = 0;
+  bool fstEx = true;
+  bool disNm = true, disCls = true, disDue = true, disProbs = true;
+
+  while (name.size() > NameWrite.size() || course.size() > CourseWrite.size()
+  || due.size() > DueWrite.size() || problems.size() > ProblemWrite.size() || fstEx || lstEx != 1)
+  {
+    if (fstEx)
+      fstEx = false;
+    if (name.size() <= NameWrite.size() && course.size() <= CourseWrite.size()
+    && due.size() <= DueWrite.size() && problems.size() <= ProblemWrite.size())
+      ++lstEx;
+    for (unsigned i = 0; i < 4; i++)
+    {
+      switch (i)
+      {
+        case 0:
+          maxLen = NameWrite.size();
+          if (!disNm)
+          {
+            for (unsigned a = 0; a < maxLen; a++)
+              cout << " ";
+            cout << " ";
+            continue;
+          }
+          current = name;
+          if (name.size() > maxLen)
+            name = name.substr(maxLen);
+          if (name.size() <= maxLen)
+            disNm = false;
+          break;
+        case 1:
+        maxLen = CourseWrite.size();
+          if (!disCls)
+          {
+            for (unsigned a = 0; a < maxLen; a++)
+              cout << " ";
+            cout << " ";
+            continue;
+          }
+          current = course;
+          if (course.size() > maxLen)
+            course = course.substr(maxLen);
+            if (course.size() <= maxLen)
+              disCls = false;
+          break;
+        case 2:
+          maxLen = DueWrite.size();
+          if (!disDue)
+          {
+            for (unsigned a = 0; a < maxLen; a++)
+              cout << " ";
+            cout << " ";
+            continue;
+          }
+          current = due;
+          if (due.size() > maxLen)
+            due = due.substr(maxLen);
+          if (due.size() <= maxLen)
+            disDue = false;
+          break;
+        case 3:
+          maxLen = ProblemWrite.size();
+          if (!disProbs)
+            continue;
+          current = problems;
+          if (problems.size() > maxLen)
+            problems = problems.substr(maxLen);
+          break;
+      }
+      if (current.size() > maxLen)
+        cout << current.substr(0, maxLen);
+
+      if (current.size() <= maxLen)
+      {
+        cout << current;
+        int addSp = maxLen - current.size();
+        for (unsigned k = 0; k < addSp; k++)
+          cout << " ";
+      }
+      cout << " ";
+    }
+    cout << endl;
+  }
+  cout << endl;
+}
+
+void rmAssnmt (string nm, vector <Homework> & stored)
+{
+  vector <int> locs;
+  for (unsigned i = 0, sz = stored.size(); i < sz; i++)
+  {
+    if (stored[i].name() == nm)
+      locs.push_back(i);
+  }
+  if (locs.size() == 0)
+    cout << "No Assignment to Remove!" << endl;
+  else if (locs.size() == 1)
+  {
+    stored.erase(stored.begin()+locs[0]);
+  }
+  else if (locs.size() > 1)
+  {
+    bool top = true;
+    cout << "Multiple Assignments with this name found!" << endl;
+    for (unsigned k = 0, size = locs.size(); k < size; k++)
+    {
+      cout << "(" << k+1 << "): " << endl;
+      showProb(stored[locs[k]], top);
+    }
+    cout << "Which would you like to remove?: ";
+    string temp, ofl;
+    int val;
+    getline (cin, temp);
+    istringstream iss (temp);
+    iss >> val;
+    if (iss >> ofl)
+    {
+      cout << "Bad Entry!" << endl;
+      return;
+    }
+    bool exists = false;
+    for (unsigned a = 0, szL = locs.size(); a < szL; a++)
+    {
+      if (a == val -1)
+        exists = true;
+    }
+    if (exists)
+      stored.erase(stored.begin() + locs[val-1]);
+    else
+      cout << "Entry does not exist!" << endl;
+  }
+}
+
+void viewAssnmt (string nm, vector <Homework> & stored)
+{
+  bool top;
   if (nm == "all")
   {
+    top = true;
     for (auto &hw : stored)
+      showProb(hw, top);
+  }
+  else
+  {
+    top = true;
+    vector <int> loc;
+    for (unsigned i = 0, sz = stored.size(); i < sz; i++)
     {
-      string name = hw.name();
-      string course = hw.course();
-      string due = hw.dueString();
-      string problems;
-      bool frst = true;
-      for (auto &prb : hw.allProbs())
-      {
-        if (!frst)
-          problems += ", ";
-        else
-          frst = false;
-        problems += prb.first + "-" + ((prb.second) ? "Unfinished" : "Finished");
-      }
-
-      string current;
-      int maxLen, lstEx = 0;
-      bool fstEx = true;
-      bool disNm = true, disCls = true, disDue = true, disProbs = true;
-
-      while (name.size() > NameWrite.size() || course.size() > CourseWrite.size()
-      || due.size() > DueWrite.size() || problems.size() > ProblemWrite.size() || fstEx || lstEx != 1)
-      {
-        if (fstEx)
-          fstEx = false;
-        if (name.size() <= NameWrite.size() && course.size() <= CourseWrite.size()
-        && due.size() <= DueWrite.size() && problems.size() <= ProblemWrite.size())
-          ++lstEx;
-        for (unsigned i = 0; i < 4; i++)
-        {
-          switch (i)
-          {
-            case 0:
-              maxLen = NameWrite.size();
-              if (!disNm)
-              {
-                for (unsigned a = 0; a < maxLen; a++)
-                  cout << " ";
-                cout << " ";
-                continue;
-              }
-              current = name;
-              if (name.size() > maxLen)
-                name = name.substr(maxLen);
-              if (name.size() <= maxLen)
-                disNm = false;
-              break;
-            case 1:
-            maxLen = CourseWrite.size();
-              if (!disCls)
-              {
-                for (unsigned a = 0; a < maxLen; a++)
-                  cout << " ";
-                cout << " ";
-                continue;
-              }
-              current = course;
-              if (course.size() > maxLen)
-                course = course.substr(maxLen);
-                if (course.size() <= maxLen)
-                  disCls = false;
-              break;
-            case 2:
-              maxLen = DueWrite.size();
-              if (!disDue)
-              {
-                for (unsigned a = 0; a < maxLen; a++)
-                  cout << " ";
-                cout << " ";
-                continue;
-              }
-              current = due;
-              if (due.size() > maxLen)
-                due = due.substr(maxLen);
-              if (due.size() <= maxLen)
-                disDue = false;
-              break;
-            case 3:
-              maxLen = ProblemWrite.size();
-              if (!disProbs)
-                continue;
-              current = problems;
-              if (problems.size() > maxLen)
-                problems = problems.substr(maxLen);
-              break;
-          }
-          if (current.size() > maxLen)
-            cout << current.substr(0, maxLen);
-
-          if (current.size() <= maxLen)
-          {
-            cout << current;
-            int addSp = maxLen - current.size();
-            for (unsigned k = 0; k < addSp; k++)
-              cout << " ";
-          }
-          cout << " ";
-        }
-        cout << endl;
-      }
-      cout << endl;
+      if (stored[i].name() == nm)
+        loc.push_back(i);
     }
+    if (loc.size() != 0)
+    {
+      for (auto &cLoc : loc)
+        showProb(stored[cLoc], top);
+    }
+    else
+      cout << "Could not find \"" << nm << "\"!" << endl;
   }
 }
 
@@ -306,7 +377,7 @@ int main (int argc, char* argv[])
 
     else if (action == "rm")
     {
-      rmAssnmt (assntNm);
+      rmAssnmt (assntNm, stored);
       changed = true;
     }
 
