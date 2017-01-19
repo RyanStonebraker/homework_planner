@@ -1,6 +1,6 @@
 // homework_planner.cpp
 // Ryan Stonebraker
-// 12/17/2016
+// 1/1/2017
 // Keeps track of homework
 
 #include <iostream>
@@ -26,11 +26,12 @@ using std::ofstream;
 #include "homework.h"
 #include <algorithm>
 using std::equal_range;
+#include <sys/ioctl.h>
+#include <cmath>
+using std::abs;
 
-void plannerMode (bool & changed)
-{
-
-}
+// TODO: fix spacing issue with long names, fix continuation to next line also w/long
+// names, add to planner mode and open new larger console window
 
 void addAssnmt (string nm, vector <Homework> & stored, bool & changed)
 {
@@ -100,13 +101,36 @@ void addAssnmt (string nm, vector <Homework> & stored, bool & changed)
 
 void showProb (Homework hw, bool & top)
 {
-  string NameWrite = "Name:            ";
-  string CourseWrite = "Course:            ";
-  string DueWrite = "Due Date:    ";
-  string ProblemWrite = "Problems:                              ";
+  struct winsize w;
+  ioctl(0, TIOCGWINSZ, &w);
+
+  // Name .25, Course .2, Due Date .15, Problems .4
+  string NameWrite = "Name:";
+  string CourseWrite = "Course:";
+  string DueWrite = "Due Date:";
+  string ProblemWrite = "Problems:";
+
+  for (unsigned i = 0, nw = NameWrite.size(), cw = CourseWrite.size(), dw = DueWrite.size(),
+  pw = ProblemWrite.size(); i < w.ws_col; i++)
+  {
+    if (i <= w.ws_col*.2 - nw)
+      NameWrite += " ";
+    if (i <= w.ws_col*.2 - cw)
+      CourseWrite += " ";
+    if (i <= w.ws_col*.15 - dw)
+      DueWrite += " ";
+    if (i <= w.ws_col*.45 - pw)
+      ProblemWrite += " ";
+  }
+
+  int totSz = NameWrite.size() + CourseWrite.size() + DueWrite.size() + ProblemWrite.size();
+  int over = abs(w.ws_col-totSz);
+
+  if (totSz > w.ws_col)
+      ProblemWrite = ProblemWrite.substr(0, ProblemWrite.size() - over);
   if (top)
   {
-    cout << NameWrite << " " << CourseWrite << " " << DueWrite << " " << ProblemWrite << endl;
+    cout << NameWrite << CourseWrite << DueWrite << ProblemWrite << endl;
     top = false;
   }
 
@@ -147,12 +171,11 @@ void showProb (Homework hw, bool & top)
           {
             for (unsigned a = 0; a < maxLen; a++)
               cout << " ";
-            cout << " ";
             continue;
           }
           current = name;
           if (name.size() > maxLen)
-            name = name.substr(maxLen);
+            name = name.substr(maxLen, name.size() - maxLen);
           if (name.size() <= maxLen)
             disNm = false;
           break;
@@ -162,12 +185,11 @@ void showProb (Homework hw, bool & top)
           {
             for (unsigned a = 0; a < maxLen; a++)
               cout << " ";
-            cout << " ";
             continue;
           }
           current = course;
           if (course.size() > maxLen)
-            course = course.substr(maxLen);
+            course = course.substr(maxLen, course.size() - maxLen);
             if (course.size() <= maxLen)
               disCls = false;
           break;
@@ -177,12 +199,11 @@ void showProb (Homework hw, bool & top)
           {
             for (unsigned a = 0; a < maxLen; a++)
               cout << " ";
-            cout << " ";
             continue;
           }
           current = due;
           if (due.size() > maxLen)
-            due = due.substr(maxLen);
+            due = due.substr(maxLen, due.size() - maxLen);
           if (due.size() <= maxLen)
             disDue = false;
           break;
@@ -192,7 +213,7 @@ void showProb (Homework hw, bool & top)
             continue;
           current = problems;
           if (problems.size() > maxLen)
-            problems = problems.substr(maxLen);
+            problems = problems.substr(maxLen, problems.size() - maxLen);
           break;
       }
       if (current.size() > maxLen)
@@ -205,7 +226,6 @@ void showProb (Homework hw, bool & top)
         for (unsigned k = 0; k < addSp; k++)
           cout << " ";
       }
-      cout << " ";
     }
     cout << endl;
   }
@@ -287,6 +307,21 @@ void viewAssnmt (string nm, vector <Homework> & stored)
   }
 }
 
+void plannerMode (vector <Homework> & stored, bool & changed)
+{
+  // TODO: open new console w/specified height and width running plannerMode
+  // function
+  cout << "Welcome to Homework Planner!" << endl;
+  cout << "In this mode, you easily have access to all of your stored \
+  entries and can make changes to or add/remove any of them." << endl;
+
+  while (true)
+  {
+
+    cout << "Would you like to add/remove/modify?: ";
+  }
+}
+
 vector <Homework> readHw ()
 {
   ifstream rdr (".homework.txt");
@@ -354,7 +389,7 @@ int main (int argc, char* argv[])
   {
     string mode = argv[1];
     if (mode == "planner")
-      plannerMode(changed);
+      plannerMode(stored, changed);
     else
       cout << "Usage: ./homework_planner planner/(add/rm/view ASSIGNMENT/all)" << endl;
     return 0;
