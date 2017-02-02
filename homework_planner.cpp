@@ -29,9 +29,19 @@ using std::equal_range;
 #include <sys/ioctl.h>
 #include <cmath>
 using std::abs;
+#include <cstdlib>
 
 // TODO: fix spacing issue with long names, fix continuation to next line also w/long
-// names, add to planner mode and open new larger console window
+// names, add to planner mode and open new larger console window, view all command
+// clears screen, add notifications to calendar, move from just console
+
+// make a function that randomly chooses a homework assignment out of the nearest
+// homework assignments due and shows it on screen to start
+
+// sort by date due in view
+
+// refactor part of code so that a separate function keeps column width
+// given the parameter of a width to make more modular
 
 void addAssnmt (string nm, vector <Homework> & stored, bool & changed)
 {
@@ -145,7 +155,7 @@ void showProb (Homework hw, bool & top)
       problems += ", ";
     else
       frst = false;
-    problems += prb.first + "-" + ((prb.second) ? "Unfinished" : "Finished");
+    problems += prb.first/* + "-" + ((prb.second) ? "Unfinished" : "Finished")*/;
   }
 
   string current;
@@ -241,7 +251,34 @@ void rmAssnmt (string nm, vector <Homework> & stored)
       locs.push_back(i);
   }
   if (locs.size() == 0)
-    cout << "No Assignment to Remove!" << endl;
+  {
+    if (nm == "all")
+    {
+      vector <Homework> blnk;
+      while (true)
+      {
+      cout << "Are you sure you want to remove all assignments?(y/n): ";
+      string entry;
+      getline (cin, entry);
+      if (entry == "y")
+      {
+        stored = blnk;
+        break;
+      }
+
+      else if (entry == "n")
+        break;
+
+      else if (entry != "n" && entry != "y")
+      {
+        cout << "Bad Entry." << endl;
+        continue;
+      }
+      }
+    }
+    else
+      cout << "No Assignment to Remove!" << endl;
+  }
   else if (locs.size() == 1)
   {
     stored.erase(stored.begin()+locs[0]);
@@ -279,8 +316,9 @@ void rmAssnmt (string nm, vector <Homework> & stored)
   }
 }
 
-void viewAssnmt (string nm, vector <Homework> & stored)
+void viewAssnmt (const string & nm, vector <Homework> & stored)
 {
+  system("clear");
   bool top;
   if (nm == "all")
   {
@@ -307,18 +345,65 @@ void viewAssnmt (string nm, vector <Homework> & stored)
   }
 }
 
+vector <int> findHw (const string & nm, vector <Homework> & stored)
+{
+  vector <int> loc;
+  for (unsigned i = 0; i < stored.size(); i++)
+  {
+    if (stored[i].name() == nm)
+      loc.push_back(i);
+  }
+  return loc;
+}
+
 void plannerMode (vector <Homework> & stored, bool & changed)
 {
   // TODO: open new console w/specified height and width running plannerMode
   // function
+  system ("clear");
   cout << "Welcome to Homework Planner!" << endl;
   cout << "In this mode, you easily have access to all of your stored \
   entries and can make changes to or add/remove any of them." << endl;
 
   while (true)
   {
+    system("clear");
+    viewAssnmt ("all", stored);
+    cout << "add/remove/modify which assignment?: ";
+    string temp, entry, assn, ofl;
+    getline (cin, temp);
+    istringstream iss (temp);
+    iss >> entry >> assn;
+    if (!iss || iss >> ofl)
+    {
+      cout << "Bad Entry!" << endl;
+      continue;
+    }
+    else if (entry == "add")
+      addAssnmt (assn, stored, changed);
 
-    cout << "Would you like to add/remove/modify?: ";
+    else if (entry == "rm" || entry == "remove")
+    {
+      rmAssnmt (assn, stored);
+      changed = true;
+    }
+
+    else if (entry == "modify" || entry == "mod")
+    {
+      cout << endl;
+      viewAssnmt (assn, stored);
+      cout << "What would you like to modify? (name/class/date/problems): ";
+      string modMe;
+      getline (cin, modMe);
+      if (modMe == "name")
+      {
+        cout << "Enter new name: ";
+        string nwNm;
+        getline (cin, nwNm);
+
+        vector <int> loc = findHw(assn, stored);
+      }
+    }
   }
 }
 
