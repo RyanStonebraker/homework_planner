@@ -30,6 +30,10 @@ using std::equal_range;
 #include <cmath>
 using std::abs;
 #include <cstdlib>
+#include <random>
+using std::mt19937;
+using std::random_device;
+using std::uniform_real_distribution;
 
 // TODO: fix spacing issue with long names, fix continuation to next line also w/long
 // names, add to planner mode and open new larger console window, view all command
@@ -55,9 +59,11 @@ void addAssnmt (string nm, vector <Homework> & stored, bool & changed)
 
   string dueDate;
   int month, day, year;
+
   cout << "Due Date (MM/DD/YYYY): ";
   getline (cin, dueDate);
   istringstream issD (dueDate);
+
   for(unsigned i = 0; i < 3; i++)
   {
     getline (issD, tmp, '/');
@@ -66,9 +72,19 @@ void addAssnmt (string nm, vector <Homework> & stored, bool & changed)
     {
       case 0:
         toInt >> month;
+        if (month > 12)
+        {
+          cout << "Month can't be greater than 12!" <<endl;
+          return;
+        }
         break;
       case 1:
         toInt >> day;
+        if (day > 31)
+        {
+          cout << "Invalid Day!" << endl;
+          return;
+        }
         break;
       case 2:
         toInt >> year;
@@ -356,57 +372,6 @@ vector <int> findHw (const string & nm, vector <Homework> & stored)
   return loc;
 }
 
-void plannerMode (vector <Homework> & stored, bool & changed)
-{
-  // TODO: open new console w/specified height and width running plannerMode
-  // function
-  system ("clear");
-  cout << "Welcome to Homework Planner!" << endl;
-  cout << "In this mode, you easily have access to all of your stored \
-  entries and can make changes to or add/remove any of them." << endl;
-
-  while (true)
-  {
-    system("clear");
-    viewAssnmt ("all", stored);
-    cout << "add/remove/modify which assignment?: ";
-    string temp, entry, assn, ofl;
-    getline (cin, temp);
-    istringstream iss (temp);
-    iss >> entry >> assn;
-    if (!iss || iss >> ofl)
-    {
-      cout << "Bad Entry!" << endl;
-      continue;
-    }
-    else if (entry == "add")
-      addAssnmt (assn, stored, changed);
-
-    else if (entry == "rm" || entry == "remove")
-    {
-      rmAssnmt (assn, stored);
-      changed = true;
-    }
-
-    else if (entry == "modify" || entry == "mod")
-    {
-      cout << endl;
-      viewAssnmt (assn, stored);
-      cout << "What would you like to modify? (name/class/date/problems): ";
-      string modMe;
-      getline (cin, modMe);
-      if (modMe == "name")
-      {
-        cout << "Enter new name: ";
-        string nwNm;
-        getline (cin, nwNm);
-
-        vector <int> loc = findHw(assn, stored);
-      }
-    }
-  }
-}
-
 vector <Homework> readHw ()
 {
   ifstream rdr (".homework.txt");
@@ -455,6 +420,69 @@ void writeHw (vector <Homework> stored)
     }
 
     wrtr << endl;
+  }
+}
+
+void plannerMode (vector <Homework> & stored, bool & changed)
+{
+  // TODO: open new console w/specified height and width running plannerMode
+  // function
+  system ("clear");
+  cout << "Welcome to Homework Planner!" << endl;
+  cout << "In this mode, you easily have access to all of your stored \
+  entries and can make changes to or add/remove any of them." << endl;
+
+  while (true)
+  {
+    system("clear");
+    viewAssnmt ("all", stored);
+    cout << "add/remove/modify/(random Choose) which assignment?: ";
+    string temp, entry, assn, ofl;
+    getline (cin, temp);
+    istringstream iss (temp);
+    iss >> entry >> assn;
+    if (!iss || iss >> ofl)
+    {
+      cout << "Bad Entry!" << endl;
+      continue;
+    }
+    else if (entry == "add")
+      addAssnmt (assn, stored, changed);
+
+    else if (entry == "rm" || entry == "remove")
+    {
+      rmAssnmt (assn, stored);
+      changed = true;
+    }
+
+    else if (entry == "modify" || entry == "mod")
+    {
+      cout << endl;
+      viewAssnmt (assn, stored);
+      cout << "What would you like to modify? (name/class/date/problems): ";
+      string modMe;
+      getline (cin, modMe);
+      if (modMe == "name")
+      {
+        cout << "Enter new name: ";
+        string nwNm;
+        getline (cin, nwNm);
+
+        vector <int> loc = findHw(assn, stored);
+      }
+    }
+    else if ((entry == "Random" || entry == "random") && (assn == "Choose" || assn == "choose"))
+    {
+      random_device seed;
+      mt19937 rndNum (seed());
+      uniform_real_distribution <double> rng (0, stored.size()-1);
+
+      int doHw = rng (rndNum);
+      cout << "Start homework: " << stored[doHw].name() << " for " << stored[doHw].course();
+      cin.ignore();
+    }
+    if (changed)
+      writeHw (stored);
   }
 }
 
